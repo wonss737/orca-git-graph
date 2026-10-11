@@ -74,6 +74,16 @@ static class Tests
         Check(!RepoWatcher.IsRefPath("index") && !RepoWatcher.IsRefPath("logs\\HEAD"), "index and reflog ignored");
     }
 
+    static void ParsesOrcaState()
+    {
+        string session = "{\"activeRepoId\":\"r1\",\"activeWorktreeId\":\"r1::C:/Users/me/문서/repo\",\"other\":1}";
+        Check(OrcaFollower.ParseActiveWorktree(session) == "C:/Users/me/문서/repo", "worktree path taken after ::");
+        Check(OrcaFollower.ParseActiveWorktree("{\"activeWorktreeId\":null}") == null, "no active worktree");
+        Check(OrcaFollower.ParseActiveWorktree("{\"activeWorktreeId\":\"r1\"}") == null, "id without a path ignored");
+        Check(OrcaFollower.ParseActiveWorktree("{\"activeWorktreeId\":\"r1::C:/a\\\"b\"}") == "C:/a\"b", "escaped quote unescaped");
+        Check(OrcaFollower.ParseActiveProfile("{\"schemaVersion\":1,\"activeProfileId\":\"local-default\"}") == "local-default", "active profile parsed");
+    }
+
     static int Main()
     {
         LinearHistoryStaysInOneLane();
@@ -82,6 +92,7 @@ static class Tests
         ParsesLog();
         QuotesArguments();
         FiltersRefPaths();
+        ParsesOrcaState();
         Console.WriteLine(failures == 0 ? "ALL PASSED" : failures + " FAILED");
         return failures == 0 ? 0 : 1;
     }

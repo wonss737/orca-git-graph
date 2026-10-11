@@ -17,6 +17,7 @@ namespace GitGraphLite
         readonly ToolStripButton allButton = new ToolStripButton("All branches");
         readonly ToolStripLabel status = new ToolStripLabel();
         readonly RepoWatcher watcher = new RepoWatcher();
+        readonly OrcaFollower orca = new OrcaFollower();
         string repo;
         int loadVersion, detailVersion;
         bool syncingRecent;
@@ -33,12 +34,15 @@ namespace GitGraphLite
             Controls.Add(BuildToolbar());
             view.SelectedChanged += delegate { ShowDetails(); };
             watcher.Changed += delegate { if (IsHandleCreated && !IsDisposed) BeginInvoke(new Action(Reload)); };
+            orca.Changed += path => { if (IsHandleCreated && !IsDisposed) BeginInvoke(new Action(() => OpenFolder(path))); };
             DragEnter += (s, e) => e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
             DragDrop += (s, e) => OnDropped(e.Data.GetData(DataFormats.FileDrop) as string[]);
             SetRecent(Recent.Load());
             Shown += delegate
             {
-                string first = startPath ?? Recent.Load().FirstOrDefault();
+                // Follow the worktree Orca is showing; a folder opened by hand stays until Orca switches.
+                string followed = orca.Start();
+                string first = startPath ?? followed ?? Recent.Load().FirstOrDefault();
                 if (first != null) OpenFolder(first);
             };
         }
@@ -198,7 +202,7 @@ namespace GitGraphLite
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) watcher.Dispose();
+            if (disposing) { orca.Dispose(); watcher.Dispose(); }
             base.Dispose(disposing);
         }
     }

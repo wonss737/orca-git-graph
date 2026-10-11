@@ -9,5 +9,5 @@ if not exist "%CSC%" set CSC=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe
 if not exist bin mkdir bin
 "%CSC%" /nologo /codepage:65001 /target:winexe /optimize+ /out:bin\GitGraphLite.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll src\*.cs || exit /b 1
 if /i not "%1"=="test" exit /b 0
-"%CSC%" /nologo /codepage:65001 /target:exe /out:bin\Tests.exe src\Git.cs src\GraphLayout.cs src\RepoWatcher.cs tests\Tests.cs || exit /b 1
+"%CSC%" /nologo /codepage:65001 /target:exe /out:bin\Tests.exe src\Git.cs src\GraphLayout.cs src\RepoWatcher.cs src\Orca.cs tests\Tests.cs || exit /b 1
 bin\Tests.exe
