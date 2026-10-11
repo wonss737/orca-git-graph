@@ -14,7 +14,7 @@ namespace GitGraphLite
         readonly TextBox details = new TextBox();
         readonly ToolStripComboBox recentBox = new ToolStripComboBox();
         readonly ToolStripComboBox limitBox = new ToolStripComboBox();
-        readonly ToolStripButton allButton = new ToolStripButton("모든 브랜치");
+        readonly ToolStripButton allButton = new ToolStripButton("All branches");
         readonly ToolStripLabel status = new ToolStripLabel();
         readonly RepoWatcher watcher = new RepoWatcher();
         string repo;
@@ -46,7 +46,7 @@ namespace GitGraphLite
         ToolStrip BuildToolbar()
         {
             var bar = new ToolStrip { GripStyle = ToolStripGripStyle.Hidden, Dock = DockStyle.Top };
-            var open = new ToolStripButton("폴더 열기…");
+            var open = new ToolStripButton("Open folder…");
             open.Click += delegate { ChooseFolder(); };
             recentBox.DropDownStyle = ComboBoxStyle.DropDownList;
             recentBox.AutoSize = false;
@@ -55,7 +55,7 @@ namespace GitGraphLite
             {
                 if (!syncingRecent && recentBox.SelectedItem != null) OpenFolder((string)recentBox.SelectedItem);
             };
-            var refresh = new ToolStripButton("새로고침 (F5)");
+            var refresh = new ToolStripButton("Refresh (F5)");
             refresh.Click += delegate { Reload(); };
             allButton.CheckOnClick = true;
             allButton.Checked = true;
@@ -69,7 +69,7 @@ namespace GitGraphLite
             bar.Items.AddRange(new ToolStripItem[]
             {
                 open, recentBox, refresh, new ToolStripSeparator(), allButton,
-                new ToolStripLabel("최대 커밋"), limitBox, new ToolStripSeparator(), status,
+                new ToolStripLabel("Max commits"), limitBox, new ToolStripSeparator(), status,
             });
             return bar;
         }
@@ -104,7 +104,7 @@ namespace GitGraphLite
 
         void ChooseFolder()
         {
-            using (var dialog = new FolderBrowserDialog { Description = "git 저장소 폴더를 고르세요", ShowNewFolderButton = false })
+            using (var dialog = new FolderBrowserDialog { Description = "Choose a git repository folder", ShowNewFolderButton = false })
             {
                 if (repo != null) dialog.SelectedPath = repo;
                 if (dialog.ShowDialog(this) == DialogResult.OK) OpenFolder(dialog.SelectedPath);
@@ -129,12 +129,12 @@ namespace GitGraphLite
 
         async void OpenFolder(string path)
         {
-            status.Text = "여는 중…";
+            status.Text = "Opening…";
             RepoInfo info;
             try { info = await Task.Run(() => Git.Resolve(path)); }
             catch (Exception ex)
             {
-                status.Text = "git 저장소가 아닙니다: " + path + " (" + FirstLine(ex.Message) + ")";
+                status.Text = "Not a git repository: " + path + " (" + FirstLine(ex.Message) + ")";
                 return;
             }
             repo = info.Root;
@@ -150,18 +150,18 @@ namespace GitGraphLite
             string dir = repo;
             int limit = Limit;
             bool all = allButton.Checked;
-            status.Text = "불러오는 중…";
+            status.Text = "Loading…";
             try
             {
                 var result = await Task.Run(() => LoadGraph(dir, limit, all));
                 if (version != loadVersion) return;
                 view.SetData(result.Item1, result.Item2);
                 Text = "Git Graph Lite - " + dir + "  [" + result.Item3 + "]";
-                status.Text = "커밋 " + result.Item1.Count + "개" + (result.Item1.Count >= limit ? " (최대치까지만 표시)" : "");
+                status.Text = result.Item1.Count + " commits" + (result.Item1.Count >= limit ? " (limit reached)" : "");
             }
             catch (Exception ex)
             {
-                if (version == loadVersion) status.Text = "오류: " + FirstLine(ex.Message);
+                if (version == loadVersion) status.Text = "Error: " + FirstLine(ex.Message);
             }
         }
 
@@ -186,7 +186,7 @@ namespace GitGraphLite
         static string FirstLine(string text)
         {
             string line = (text ?? "").Split('\n')[0].Trim();
-            return line.Length > 0 ? line : "알 수 없는 오류";
+            return line.Length > 0 ? line : "Unknown error";
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

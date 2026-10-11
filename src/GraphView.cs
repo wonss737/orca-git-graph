@@ -99,8 +99,8 @@ namespace GitGraphLite
         ContextMenuStrip BuildMenu()
         {
             var menu = new ContextMenuStrip();
-            menu.Items.Add("해시 복사 (Ctrl+C)", null, delegate { Copy(c => c.Hash); });
-            menu.Items.Add("제목 복사", null, delegate { Copy(c => c.Subject); });
+            menu.Items.Add("Copy hash (Ctrl+C)", null, delegate { Copy(c => c.Hash); });
+            menu.Items.Add("Copy subject", null, delegate { Copy(c => c.Subject); });
             return menu;
         }
 
@@ -121,7 +121,7 @@ namespace GitGraphLite
             g.Clear(BackColor);
             if (commits.Count == 0 || layout == null)
             {
-                TextRenderer.DrawText(g, "폴더를 열거나 창에 끌어다 놓으세요 (Ctrl+O)", Font, ClientRectangle, Muted,
+                TextRenderer.DrawText(g, "Open a folder or drag one onto the window (Ctrl+O)", Font, ClientRectangle, Muted,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 return;
             }

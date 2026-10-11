@@ -14,9 +14,9 @@ Requires `git` on `PATH`.
 ## Use
 
 - `bin\GitGraphLite.exe [folder]` opens the folder; without an argument it opens the last folder.
-- Pick a folder with **폴더 열기…** (Ctrl+O), the recent-folder list, or drag a folder onto the window.
+- Pick a folder with **Open folder…** (Ctrl+O), the recent-folder list, or drag a folder onto the window.
 - The graph reloads by itself when HEAD or refs change (commit, checkout, fetch, rebase); F5 reloads by hand.
-- **모든 브랜치** toggles `--all`; **최대 커밋** limits how many commits are read.
+- **All branches** toggles `--all`; **Max commits** limits how many commits are read.
 - Select a commit to see `git show --stat` below; arrow keys, PageUp/PageDown, Home/End move; Ctrl+C copies the hash.
 
 ## Files
