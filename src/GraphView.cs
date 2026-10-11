@@ -106,7 +106,7 @@ namespace GitGraphLite
 
         void Copy(Func<Commit, string> pick)
         {
-            if (Selected != null) Clipboard.SetText(pick(Selected));
+            if (Selected != null && !Selected.Uncommitted) Clipboard.SetText(pick(Selected));
         }
 
         protected override void OnFontChanged(EventArgs e)
@@ -168,8 +168,8 @@ namespace GitGraphLite
             float r = rowH * 0.22f, x = LaneX(lane);
             var rect = new RectangleF(x - r, mid - r, r * 2, r * 2);
             var pen = LanePen(lane);
-            bool merge = c.Parents.Length > 1;
-            using (var fill = new SolidBrush(merge ? Color.White : pen.Color)) g.FillEllipse(fill, rect);
+            bool hollow = c.Parents.Length > 1 || c.Uncommitted;
+            using (var fill = new SolidBrush(hollow ? Color.White : pen.Color)) g.FillEllipse(fill, rect);
             g.DrawEllipse(pen, rect);
             if (c.Refs.Exists(x2 => x2.Current || x2.Kind == RefKind.Head))
             {
@@ -186,7 +186,7 @@ namespace GitGraphLite
             bool wide = row.Width - x > hashW + dateW + authorW + 200;
             int right = wide ? row.Width - hashW - dateW - authorW - 12 : row.Width - 8;
             x = PaintRefs(g, c, x, row.Y, right);
-            DrawCell(g, c.Subject, Font, x, right, row, ForeColor);
+            DrawCell(g, c.Subject, c.Uncommitted ? bold : Font, x, right, row, c.Uncommitted ? Muted : ForeColor);
             if (!wide) return;
             DrawCell(g, c.Author, Font, right + 8, right + 8 + authorW, row, Muted);
             DrawCell(g, c.Date, Font, right + 8 + authorW, right + 8 + authorW + dateW, row, Muted);

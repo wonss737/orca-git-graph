@@ -74,6 +74,23 @@ static class Tests
         Check(!RepoWatcher.IsRefPath("index") && !RepoWatcher.IsRefPath("logs\\HEAD"), "index and reflog ignored");
     }
 
+    static void UncommittedRowSitsOnHead()
+    {
+        var u = Git.UncommittedCommit(3, "b");
+        Check(u.Uncommitted && u.Subject == "Uncommitted changes (3 files)", "uncommitted row labelled with file count");
+        var layout = GraphLayout.Build(new[] { u, C("x", "a"), C("b", "a"), C("a") });
+        var rows = layout.Rows;
+        Check(rows[0].Lane == 0 && rows[0].Bottom[0].To == 0, "uncommitted row waits for HEAD in its lane");
+        Check(rows[2].Lane == 0 && rows[2].Top.Count == 1, "HEAD commit joins the uncommitted row's lane");
+        Check(Git.UncommittedCommit(1, null).Parents.Length == 0, "unborn branch gives no parent");
+    }
+
+    static void FiltersWorktreePaths()
+    {
+        Check(RepoWatcher.IsWorktreePath("src\\a.cs") && RepoWatcher.IsWorktreePath(".gitignore"), "worktree files watched");
+        Check(!RepoWatcher.IsWorktreePath(".git") && !RepoWatcher.IsWorktreePath(".git\\index"), "git dir ignored in worktree");
+    }
+
     static void ParsesOrcaState()
     {
         string session = "{\"activeRepoId\":\"r1\",\"activeWorktreeId\":\"r1::C:/Users/me/문서/repo\",\"other\":1}";
@@ -93,6 +110,8 @@ static class Tests
         QuotesArguments();
         FiltersRefPaths();
         ParsesOrcaState();
+        UncommittedRowSitsOnHead();
+        FiltersWorktreePaths();
         Console.WriteLine(failures == 0 ? "ALL PASSED" : failures + " FAILED");
         return failures == 0 ? 0 : 1;
     }

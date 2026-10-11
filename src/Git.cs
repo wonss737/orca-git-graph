@@ -23,6 +23,7 @@ namespace GitGraphLite
         public string Date;
         public string Author;
         public string Subject;
+        public bool Uncommitted; // the pseudo-commit for working tree changes
     }
 
     public sealed class RepoInfo
@@ -99,6 +100,42 @@ namespace GitGraphLite
             if (all) args.Insert(1, "--all");
             var remotes = Run(dir, "remote").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             return ParseLog(Run(dir, args.ToArray()), new HashSet<string>(remotes));
+        }
+
+        // A pseudo-commit on top of HEAD for staged, unstaged and untracked changes, or null when the worktree is clean.
+        public static Commit Uncommitted(string dir)
+        {
+            int count = Run(dir, "--no-optional-locks", "status", "--porcelain")
+                .Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            return count == 0 ? null : UncommittedCommit(count, Head(dir));
+        }
+
+        public static Commit UncommittedCommit(int files, string head)
+        {
+            return new Commit
+            {
+                Hash = "*",
+                Parents = head == null ? new string[0] : new[] { head },
+                Refs = new List<GitRef>(),
+                Date = "",
+                Author = "",
+                Subject = "Uncommitted changes (" + files + (files == 1 ? " file)" : " files)"),
+                Uncommitted = true,
+            };
+        }
+
+        // The commit HEAD points to, or null on an unborn branch.
+        static string Head(string dir)
+        {
+            try { return Run(dir, "rev-parse", "--verify", "-q", "HEAD").Trim(); }
+            catch (InvalidOperationException) { return null; }
+        }
+
+        public static string ShowUncommitted(string dir)
+        {
+            string text = Run(dir, "--no-optional-locks", "status", "--short", "--branch");
+            if (Head(dir) != null) text += "\n" + Run(dir, "--no-optional-locks", "diff", "--stat=200", "--no-color", "--no-ext-diff", "HEAD");
+            return text;
         }
 
         public static string CurrentBranch(string dir)

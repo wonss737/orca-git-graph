@@ -142,7 +142,7 @@ namespace GitGraphLite
                 return;
             }
             repo = info.Root;
-            watcher.Watch(info.CommonDir);
+            watcher.Watch(info.CommonDir, info.Root);
             SetRecent(Recent.Add(repo));
             Reload();
         }
@@ -160,8 +160,11 @@ namespace GitGraphLite
                 var result = await Task.Run(() => LoadGraph(dir, limit, all));
                 if (version != loadVersion) return;
                 view.SetData(result.Item1, result.Item2);
+                // The uncommitted row keeps its place across reloads, so refresh its details by hand.
+                if (view.Selected != null && view.Selected.Uncommitted) ShowDetails();
                 Text = "Git Graph Lite - " + dir + "  [" + result.Item3 + "]";
-                status.Text = result.Item1.Count + " commits" + (result.Item1.Count >= limit ? " (limit reached)" : "");
+                int count = result.Item1.Count(c => !c.Uncommitted);
+                status.Text = count + " commits" + (count >= limit ? " (limit reached)" : "");
             }
             catch (Exception ex)
             {
@@ -172,6 +175,8 @@ namespace GitGraphLite
         static Tuple<List<Commit>, GraphLayout, string> LoadGraph(string dir, int limit, bool all)
         {
             var commits = Git.Log(dir, limit, all);
+            var uncommitted = Git.Uncommitted(dir);
+            if (uncommitted != null) commits.Insert(0, uncommitted);
             return Tuple.Create(commits, GraphLayout.Build(commits), Git.CurrentBranch(dir));
         }
 
@@ -182,7 +187,7 @@ namespace GitGraphLite
             if (commit == null) { details.Text = ""; return; }
             string dir = repo;
             string text;
-            try { text = await Task.Run(() => Git.Show(dir, commit.Hash)); }
+            try { text = await Task.Run(() => commit.Uncommitted ? Git.ShowUncommitted(dir) : Git.Show(dir, commit.Hash)); }
             catch (Exception ex) { text = ex.Message; }
             if (version == detailVersion) details.Text = text.Replace("\r\n", "\n").Replace("\n", "\r\n");
         }
